@@ -9,6 +9,6 @@ router.get('/todolist/:todo_list_id', authenticateUser, verifyTodoOwnership, Tas
 router.get('/:id', authenticateUser, TaskController.getTaskById);
 router.put('/:id', authenticateUser, verifyTaskOwnership, TaskController.updateTask);
 router.delete('/:id', authenticateUser, verifyTaskOwnership, TaskController.deleteTask);
-router.patch('/:id/toggle', authenticateUser, verifyTaskOwnership, TaskController.toggleTaskStatus);
+router.patch('/:id/item', authenticateUser, verifyTaskOwnership, TaskController.toggleTaskStatus);
 
 module.exports = router;

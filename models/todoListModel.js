@@ -14,15 +14,79 @@ const TodoModel = {
             const total = countResult[0].total;
             const total_pages = Math.ceil(total / limit);
 
-            db.query('SELECT * FROM todo_lists WHERE user_id = ? LIMIT ? OFFSET ?', [user_id, limit, offset], (err, todoLists) => {
+            const query = `
+                SELECT 
+                    tl.id AS todo_id, tl.name AS todo_name, tl.user_id, 
+                    t.id AS task_id, t.name AS task_name, t.checked
+                FROM todo_lists tl
+                LEFT JOIN tasks t ON tl.id = t.todo_list_id
+                WHERE tl.user_id = ?
+                LIMIT ? OFFSET ?
+            `;
+
+            db.query(query, [user_id, limit, offset], (err, results) => {
                 if (err) return callback(err, null);
-                callback(null, { total, total_pages, current_page: page, data: todoLists });
+
+                const todoListsMap = new Map();
+
+                results.forEach(row => {
+                    if (!todoListsMap.has(row.todo_id)) {
+                        todoListsMap.set(row.todo_id, {
+                            id: row.todo_id,
+                            name: row.todo_name,
+                            user_id: row.user_id,
+                            tasks: []
+                        });
+                    }
+
+                    if (row.task_id) {
+                        todoListsMap.get(row.todo_id).tasks.push({
+                            id: row.task_id,
+                            name: row.task_name,
+                            checked: row.checked
+                        });
+                    }
+                });
+
+                callback(null, {
+                    total,
+                    total_pages,
+                    current_page: page,
+                    data: Array.from(todoListsMap.values())
+                });
             });
         });
     },
 
     findById: (id, callback) => {
-        db.query('SELECT * FROM todo_lists WHERE id = ?', [id], callback);
+        const query = `
+            SELECT 
+                tl.id AS todo_id, tl.name AS todo_name, tl.user_id, 
+                t.id AS task_id, t.name AS task_name, t.checked
+            FROM todo_lists tl
+            LEFT JOIN tasks t ON tl.id = t.todo_list_id
+            WHERE tl.id = ?
+        `;
+
+        db.query(query, [id], (err, results) => {
+            if (err) return callback(err, null);
+            if (results.length === 0) return callback(null, null);
+
+            const todo = {
+                id: results[0].todo_id,
+                name: results[0].todo_name,
+                user_id: results[0].user_id,
+                tasks: results[0].task_id ?
+                    results.map(task => ({
+                        id: task.task_id,
+                        name: task.task_name,
+                        checked: task.checked
+                    })) :
+                    []
+            };
+
+            callback(null, todo);
+        });
     },
 
     update: (id, name, callback) => {

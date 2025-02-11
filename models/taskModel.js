@@ -4,28 +4,25 @@ exports.getAllTasks = (userId, limit, page, callback) => {
     const offset = (page - 1) * limit;
 
     db.query(
-        `SELECT COUNT(*) AS total FROM tasks 
-         WHERE todo_list_id IN (SELECT id FROM todo_lists WHERE user_id = ?)`, [userId],
-        (err, countResult) => {
+        `SELECT SQL_CALC_FOUND_ROWS t.* 
+         FROM tasks t
+         JOIN todo_lists tl ON t.todo_list_id = tl.id
+         WHERE tl.user_id = ? 
+         ORDER BY t.created_at DESC
+         LIMIT ? OFFSET ?; 
+         SELECT FOUND_ROWS() AS total;`, [userId, limit, offset],
+        (err, results) => {
             if (err) return callback(err);
 
-            const total = countResult[0].total;
+            const tasks = results[0];
+            const total = results[1][0].total;
             const total_pages = Math.ceil(total / limit);
 
-            db.query(
-                `SELECT t.* FROM tasks t
-                 JOIN todo_lists tl ON t.todo_list_id = tl.id
-                 WHERE tl.user_id = ? 
-                 ORDER BY t.created_at DESC
-                 LIMIT ? OFFSET ?`, [userId, limit, offset],
-                (err, tasks) => {
-                    if (err) return callback(err);
-                    callback(null, { total, total_pages, tasks });
-                }
-            );
+            callback(null, { total, total_pages, tasks });
         }
     );
 };
+
 
 exports.createTask = (name, todo_list_id, callback) => {
     db.query(

@@ -14,7 +14,7 @@ app.use(express.json()); // No need for body-parser in Express 4.16+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/todos', todoRoutes);
-app.use('/api/tasks', taskRoutes);
+app.use('/api/checklist', taskRoutes);
 
 // Server Configuration
 const PORT = process.env.PORT || 5000;
