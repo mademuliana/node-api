@@ -5,6 +5,7 @@ const TodoController = require('../controllers/todoController');
 
 router.post('/', authMiddleware, TodoController.createTodoList);
 router.get('/', authMiddleware, TodoController.getUserTodoLists);
+router.get('/:id', authMiddleware, TodoController.getTodoListById);
 router.put('/:id', authMiddleware, TodoController.updateTodoList);
 router.delete('/:id', authMiddleware, TodoController.deleteTodoList);
 
